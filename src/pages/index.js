@@ -4,6 +4,7 @@ import {Firebase} from 'src/clients/Firebase'
 
 export default function Chat() {
     const table = 'messages'
+    const [code, setCode] = useState('')
     const [user, setUser] = useState({
         username: '',
         authenticated: false
@@ -15,10 +16,12 @@ export default function Chat() {
     const [messages, setMessages] = useState([])
 
     useEffect(() => {
-        firebase.index(table, setMessages)
+        if (code) {
+            firebase.index(`${table}/${code}`, setMessages)
+        }
 
         return () => firebase.off(table)
-    }, [])
+    }, [code])
 
     function toTime(time) {
         return new Date(time).toLocaleString()
@@ -26,11 +29,15 @@ export default function Chat() {
 
     if (!user.authenticated) {
         return <div>
-            <input onChange={event => setUser({...user, username: event.target.value})}/>
+            <label>Name</label>
+            <input value={user.username} onChange={event => setUser({...user, username: event.target.value})}/>
+
+            <label>Code</label>
+            <input value={code} onChange={event => setCode(event.target.value)}/>
 
             <button
                 onClick={() => setUser({...user, authenticated: true})}
-                disabled={!user.username}
+                disabled={!user.username || !code}
             >
                 Log in
             </button>
@@ -53,7 +60,7 @@ export default function Chat() {
 
         <button onClick={() => {
             if (message.length) {
-                firebase.store(table, user, {message})
+                firebase.store(`${table}/${code}`, user, {message})
             }
         }}>
             send
